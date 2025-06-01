@@ -1,15 +1,16 @@
 "use client"
 
-import type React from "react"
-
 import { Navigate } from "react-router-dom"
-import { useAuth } from "../context/AuthContext"
+
+import { useAuth } from "../contexts/AuthContext"
+import type { ReactNode } from "react"
+import type { JSX } from "react/jsx-runtime"
 
 interface ProtectedRouteProps {
-  children: React.ReactNode
+  children: ReactNode
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+export const ProtectedRoute = ({ children }: ProtectedRouteProps): JSX.Element => {
   const { user, loading } = useAuth()
 
   if (loading) {

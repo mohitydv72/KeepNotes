@@ -2,39 +2,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, type FormEvent, type ChangeEvent } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { notesAPI } from "../services/api"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { Input } from "../components/ui/input"
-import { Label } from "../components/ui/label"
-import { Textarea } from "../components/ui/textarea"
-import { Checkbox } from "../components/ui/checkbox"
 import { Plus, Trash2, FileText, CheckSquare, ArrowLeft, Save } from "lucide-react"
+import type { Note, NoteItem } from "../types"
 import toast from "react-hot-toast"
+import type { JSX } from "react/jsx-runtime"
 
-interface NoteItem {
-  text: string
-  completed?: boolean
-}
-
-interface Note {
-  _id: string
-  title: string
-  type: "bullet" | "checklist"
-  items: NoteItem[]
-  createdAt: string
-  updatedAt: string
-}
-
-export default function EditNotePage() {
+export default function EditNotePage(): JSX.Element {
   const [note, setNote] = useState<Note | null>(null)
-  const [title, setTitle] = useState("")
+  const [title, setTitle] = useState<string>("")
   const [items, setItems] = useState<NoteItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [saving, setSaving] = useState<boolean>(false)
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
@@ -44,13 +25,13 @@ export default function EditNotePage() {
     }
   }, [id])
 
-  const fetchNote = async (noteId: string) => {
+  const fetchNote = async (noteId: string): Promise<void> => {
     try {
       const response = await notesAPI.getNoteById(noteId)
-      const data = response.data
-      setNote(data)
-      setTitle(data.title)
-      setItems(data.items)
+      const data = response.data.data
+      setNote(data ?? null)
+      setTitle(data?.title ?? "")
+      setItems(data?.items ?? [])
     } catch (error: any) {
       if (error.response?.status === 404) {
         toast.error("Note not found")
@@ -63,29 +44,29 @@ export default function EditNotePage() {
     }
   }
 
-  const addItem = () => {
+  const addItem = (): void => {
     setItems([...items, { text: "", completed: false }])
   }
 
-  const removeItem = (index: number) => {
+  const removeItem = (index: number): void => {
     if (items.length > 1) {
       setItems(items.filter((_, i) => i !== index))
     }
   }
 
-  const updateItem = (index: number, text: string) => {
+  const updateItem = (index: number, text: string): void => {
     const newItems = [...items]
     newItems[index].text = text
     setItems(newItems)
   }
 
-  const toggleItemCompleted = (index: number) => {
+  const toggleItemCompleted = (index: number): void => {
     const newItems = [...items]
     newItems[index].completed = !newItems[index].completed
     setItems(newItems)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
 
     if (!title.trim()) {
@@ -104,7 +85,6 @@ export default function EditNotePage() {
     try {
       await notesAPI.updateNote(note!._id, {
         title: title.trim(),
-        type: note!.type,
         items: validItems,
       })
       toast.success("Note updated successfully!")
@@ -136,10 +116,13 @@ export default function EditNotePage() {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="text-center py-16">
-          <h2 className="text-2xl font-bold text-gray-900  mb-4">Note not found</h2>
-          <Button asChild>
-            <Link to="/dashboard">Back to Dashboard</Link>
-          </Button>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Note not found</h2>
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Back to Dashboard
+          </Link>
         </div>
       </div>
     )
@@ -148,37 +131,37 @@ export default function EditNotePage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <div className="mb-6">
-        <Button asChild variant="ghost" className="mb-4">
-          <Link to={`/notes/${note._id}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Note
-          </Link>
-        </Button>
-        <h1 className="text-3xl font-bold text-gray-900 ">Edit Note</h1>
-        <p className="text-gray-600  mt-2">
+        <Link
+          to={`/notes/${note._id}`}
+          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Note
+        </Link>
+        <h1 className="text-3xl font-bold text-gray-900">Edit Note</h1>
+        <p className="text-gray-600 mt-2">
           Make changes to your {note.type === "bullet" ? "bullet point" : "checklist"} note
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Note Details</CardTitle>
-            <CardDescription>Update the title and content of your note</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Note Details</h2>
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="title">Title</Label>
-              <Input
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                Title
+              </label>
+              <input
                 id="title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
                 placeholder="Enter note title..."
-                className="mt-1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
-            <div className="flex items-center gap-2 p-3 bg-gray-50  rounded-lg">
+            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
               {note.type === "bullet" ? (
                 <FileText className="h-5 w-5 text-blue-600" />
               ) : (
@@ -189,64 +172,71 @@ export default function EditNotePage() {
                 <div className="text-sm text-gray-500">Note type cannot be changed after creation</div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              {note.type === "bullet" ? (
-                <FileText className="mr-2 h-5 w-5" />
-              ) : (
-                <CheckSquare className="mr-2 h-5 w-5" />
-              )}
-              {note.type === "bullet" ? "Bullet Points" : "Checklist Items"}
-            </CardTitle>
-            <CardDescription>
-              Edit items in your {note.type === "bullet" ? "bullet point list" : "checklist"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            {note.type === "bullet" ? <FileText className="mr-2 h-5 w-5" /> : <CheckSquare className="mr-2 h-5 w-5" />}
+            {note.type === "bullet" ? "Bullet Points" : "Checklist Items"}
+          </h2>
+          <div className="space-y-3">
             {items.map((item, index) => (
               <div key={index} className="flex items-center gap-3">
                 {note.type === "checklist" && (
-                  <Checkbox checked={item.completed || false} onCheckedChange={() => toggleItemCompleted(index)} />
+                  <input
+                    type="checkbox"
+                    checked={item.completed || false}
+                    onChange={() => toggleItemCompleted(index)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
                 )}
                 <div className="flex-1">
-                  <Textarea
+                  <textarea
                     value={item.text}
-                    onChange={(e) => updateItem(index, e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) => updateItem(index, e.target.value)}
                     placeholder={`Enter ${note.type === "bullet" ? "bullet point" : "task"}...`}
-                    className="min-h-[60px] resize-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    rows={2}
                   />
                 </div>
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="icon"
                   onClick={() => removeItem(index)}
                   disabled={items.length === 1}
+                  className="p-2 text-red-600 hover:text-red-800 disabled:text-gray-400 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="h-4 w-4" />
-                </Button>
+                </button>
               </div>
             ))}
 
-            <Button type="button" variant="outline" onClick={addItem} className="w-full">
+            <button
+              type="button"
+              onClick={addItem}
+              className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add {note.type === "bullet" ? "Bullet Point" : "Task"}
-            </Button>
-          </CardContent>
-        </Card>
+            </button>
+          </div>
+        </div>
 
         <div className="flex gap-4">
-          <Button type="submit" disabled={saving} className="flex-1">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          >
             <Save className="mr-2 h-4 w-4" />
             {saving ? "Saving..." : "Save Changes"}
-          </Button>
-          <Button asChild type="button" variant="outline">
-            <Link to={`/notes/${note._id}`}>Cancel</Link>
-          </Button>
+          </button>
+          <Link
+            to={`/notes/${note._id}`}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 text-center"
+          >
+            Cancel
+          </Link>
         </div>
       </form>
     </div>

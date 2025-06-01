@@ -1,7 +1,6 @@
- 
 import { Routes, Route, Navigate } from "react-router-dom"
-import { AuthProvider } from "./context/AuthContext"
-// import { ProtectedRoute } from "./components/ProtectedRoute"
+import { AuthProvider } from "./contexts/AuthContext"
+import { ProtectedRoute } from "./components/ProtectedRoute"
 import { Navigation } from "./components/Navigation"
 import HomePage from "./pages/HomePage"
 import LoginPage from "./pages/LoginPage"
@@ -10,11 +9,12 @@ import DashboardPage from "./pages/DashboardPage"
 import CreateNotePage from "./pages/CreateNotePage"
 import ViewNotePage from "./pages/ViewNotePage"
 import EditNotePage from "./pages/EditNotePage"
+import type { JSX } from "react/jsx-runtime"
 
-function App() {
+function App(): JSX.Element {
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-gray-50 ">
+      <div className="min-h-screen bg-gray-50">
         <Navigation />
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -23,33 +23,33 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
                 <DashboardPage />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/notes/new"
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
                 <CreateNotePage />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/notes/:id"
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
                 <ViewNotePage />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/notes/:id/edit"
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
                 <EditNotePage />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
           <Route path="*" element={<Navigate to="/" replace />} />

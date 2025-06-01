@@ -1,28 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
-// "use client"
+"use client"
 
-import type React from "react"
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { authAPI } from "../services/api"
-
-interface User {
-  id: string
-  name: string
-  email: string
-}
-
-interface AuthContextType {
-  user: User | null
-  token: string | null
-  login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
-  logout: () => void
-  loading: boolean
-}
+import type { User, AuthContextType } from "../types"
+import type { JSX } from "react/jsx-runtime" // Import JSX to fix the undeclared variable error
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext)
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider")
@@ -34,10 +20,10 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState<boolean>(true)
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token")
@@ -50,7 +36,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(false)
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<void> => {
     const response = await authAPI.login(email, password)
     const { token, user } = response.data
 
@@ -60,7 +46,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(user)
   }
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string): Promise<void> => {
     const response = await authAPI.register(name, email, password)
     const { token, user } = response.data
 
@@ -70,14 +56,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(user)
   }
 
-  const logout = () => {
+  const logout = (): void => {
     localStorage.removeItem("token")
     localStorage.removeItem("user")
     setToken(null)
     setUser(null)
   }
 
-  const value = {
+  const value: AuthContextType = {
     user,
     token,
     login,

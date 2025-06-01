@@ -1,4 +1,5 @@
-import axios from "axios"
+import axios, { type AxiosResponse, type AxiosError } from "axios"
+import type { AuthResponse, ApiResponse, Note, CreateNoteData, UpdateNoteData, NotesStats } from "../types"
 
 const API_BASE_URL = "http://localhost:5000/api"
 
@@ -15,23 +16,45 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// Handle response errors
+api.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token")
+      localStorage.removeItem("user")
+      window.location.href = "/login"
+    }
+    return Promise.reject(error)
+  },
+)
+
 // Auth API
 export const authAPI = {
-  login: (email: string, password: string) => api.post("auth/login", { email, password }),
-  register: (name: string, email: string, password: string) => api.post("auth/signup", { name, email, password }),
+  login: (email: string, password: string): Promise<AxiosResponse<AuthResponse>> =>
+    api.post("/auth/login", { email, password }),
+
+  register: (name: string, email: string, password: string): Promise<AxiosResponse<AuthResponse>> =>
+    api.post("/auth/register", { name, email, password }),
+
+  getProfile: (): Promise<AxiosResponse<ApiResponse>> => api.get("/auth/profile"),
 }
 
 // Notes API
-
-interface GetNotesParams {
-  type?: "bullet" | "checklist";
-}
 export const notesAPI = {
-  getAllNotes: (params?: GetNotesParams) => api.get("/notes", { params }),
-  getNoteById: (id: string) => api.get(`/notes/${id}`),
-  createNote: (noteData: unknown) => api.post("/notes", noteData),
-  updateNote: (id: string, noteData: unknown) => api.put(`/notes/${id}`, noteData),
-  deleteNote: (id: string) => api.delete(`/notes/${id}`),
+  getAllNotes: (params: { type?: string } = {}): Promise<AxiosResponse<ApiResponse<Note[]>>> =>
+    api.get("/notes", { params }),
+
+  getNoteById: (id: string): Promise<AxiosResponse<ApiResponse<Note>>> => api.get(`/notes/${id}`),
+
+  createNote: (noteData: CreateNoteData): Promise<AxiosResponse<ApiResponse<Note>>> => api.post("/notes", noteData),
+
+  updateNote: (id: string, noteData: UpdateNoteData): Promise<AxiosResponse<ApiResponse<Note>>> =>
+    api.put(`/notes/${id}`, noteData),
+
+  deleteNote: (id: string): Promise<AxiosResponse<ApiResponse>> => api.delete(`/notes/${id}`),
+
+  getStats: (): Promise<AxiosResponse<ApiResponse<NotesStats>>> => api.get("/notes/stats"),
 }
 
 export default api

@@ -1,55 +1,43 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import { useState, type FormEvent, type ChangeEvent, type JSX } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { notesAPI } from "../services/api"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { Input } from "../components/ui/input"
-import { Label } from "../components/ui/label"
-import { Textarea } from "../components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group"
-import { Checkbox } from "../components/ui/checkbox"
 import { Plus, Trash2, FileText, CheckSquare, ArrowLeft } from "lucide-react"
+import type { NoteItem } from "../types"
 import toast from "react-hot-toast"
 
-interface NoteItem {
-  text: string
-  completed?: boolean
-}
-
-export default function CreateNotePage() {
-  const [title, setTitle] = useState("")
+export default function CreateNotePage(): JSX.Element {
+  const [title, setTitle] = useState<string>("")
   const [type, setType] = useState<"bullet" | "checklist">("bullet")
   const [items, setItems] = useState<NoteItem[]>([{ text: "" }])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
   const navigate = useNavigate()
 
-  const addItem = () => {
+  const addItem = (): void => {
     setItems([...items, { text: "", completed: false }])
   }
 
-  const removeItem = (index: number) => {
+  const removeItem = (index: number): void => {
     if (items.length > 1) {
       setItems(items.filter((_, i) => i !== index))
     }
   }
 
-  const updateItem = (index: number, text: string) => {
+  const updateItem = (index: number, text: string): void => {
     const newItems = [...items]
     newItems[index].text = text
     setItems(newItems)
   }
 
-  const toggleItemCompleted = (index: number) => {
+  const toggleItemCompleted = (index: number): void => {
     const newItems = [...items]
     newItems[index].completed = !newItems[index].completed
     setItems(newItems)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
 
     if (!title.trim()) {
@@ -80,117 +68,143 @@ export default function CreateNotePage() {
     }
   }
 
+  const handleTypeChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    setType(e.target.value as "bullet" | "checklist")
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <div className="mb-6">
-        <Button asChild variant="ghost" className="mb-4">
-          <Link to="/dashboard">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Link>
-        </Button>
-        <h1 className="text-3xl font-bold text-gray-900 ">Create New Note</h1>
-        <p className="text-gray-600  mt-2">Choose between bullet points or checklist format</p>
+        <Link to="/dashboard" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Dashboard
+        </Link>
+        <h1 className="text-3xl font-bold text-gray-900">Create New Note</h1>
+        <p className="text-gray-600 mt-2">Choose between bullet points or checklist format</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Note Details</CardTitle>
-            <CardDescription>Enter the title and select the format for your note</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Note Details</h2>
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="title">Title</Label>
-              <Input
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                Title
+              </label>
+              <input
                 id="title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
                 placeholder="Enter note title..."
-                className="mt-1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             <div>
-              <Label>Note Type</Label>
-              <RadioGroup
-                value={type}
-                onValueChange={(value) => setType(value as "bullet" | "checklist")}
-                className="mt-2"
-              >
-                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 ">
-                  <RadioGroupItem value="bullet" id="bullet" />
-                  <Label htmlFor="bullet" className="flex items-center cursor-pointer flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Note Type</label>
+              <div className="space-y-2">
+                <div className="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="radio"
+                    id="bullet"
+                    name="type"
+                    value="bullet"
+                    checked={type === "bullet"}
+                    onChange={handleTypeChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  />
+                  <label htmlFor="bullet" className="ml-3 flex items-center cursor-pointer flex-1">
                     <FileText className="mr-2 h-4 w-4" />
                     <div>
                       <div className="font-medium">Bullet Points</div>
                       <div className="text-sm text-gray-500">Simple list with bullet points</div>
                     </div>
-                  </Label>
+                  </label>
                 </div>
-                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 ">
-                  <RadioGroupItem value="checklist" id="checklist" />
-                  <Label htmlFor="checklist" className="flex items-center cursor-pointer flex-1">
+                <div className="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="radio"
+                    id="checklist"
+                    name="type"
+                    value="checklist"
+                    checked={type === "checklist"}
+                    onChange={handleTypeChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  />
+                  <label htmlFor="checklist" className="ml-3 flex items-center cursor-pointer flex-1">
                     <CheckSquare className="mr-2 h-4 w-4" />
                     <div>
                       <div className="font-medium">Checklist</div>
                       <div className="text-sm text-gray-500">To-do list with checkboxes</div>
                     </div>
-                  </Label>
+                  </label>
                 </div>
-              </RadioGroup>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              {type === "bullet" ? <FileText className="mr-2 h-5 w-5" /> : <CheckSquare className="mr-2 h-5 w-5" />}
-              {type === "bullet" ? "Bullet Points" : "Checklist Items"}
-            </CardTitle>
-            <CardDescription>Add items to your {type === "bullet" ? "bullet point list" : "checklist"}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            {type === "bullet" ? <FileText className="mr-2 h-5 w-5" /> : <CheckSquare className="mr-2 h-5 w-5" />}
+            {type === "bullet" ? "Bullet Points" : "Checklist Items"}
+          </h2>
+          <div className="space-y-3">
             {items.map((item, index) => (
               <div key={index} className="flex items-center gap-3">
                 {type === "checklist" && (
-                  <Checkbox checked={item.completed || false} onCheckedChange={() => toggleItemCompleted(index)} />
+                  <input
+                    type="checkbox"
+                    checked={item.completed || false}
+                    onChange={() => toggleItemCompleted(index)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
                 )}
                 <div className="flex-1">
-                  <Textarea
+                  <textarea
                     value={item.text}
-                    onChange={(e) => updateItem(index, e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) => updateItem(index, e.target.value)}
                     placeholder={`Enter ${type === "bullet" ? "bullet point" : "task"}...`}
-                    className="min-h-[60px] resize-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    rows={2}
                   />
                 </div>
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="icon"
                   onClick={() => removeItem(index)}
                   disabled={items.length === 1}
+                  className="p-2 text-red-600 hover:text-red-800 disabled:text-gray-400 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="h-4 w-4" />
-                </Button>
+                </button>
               </div>
             ))}
 
-            <Button type="button" variant="outline" onClick={addItem} className="w-full">
+            <button
+              type="button"
+              onClick={addItem}
+              className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add {type === "bullet" ? "Bullet Point" : "Task"}
-            </Button>
-          </CardContent>
-        </Card>
+            </button>
+          </div>
+        </div>
 
         <div className="flex gap-4">
-          <Button type="submit" disabled={loading} className="flex-1">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          >
             {loading ? "Creating..." : "Create Note"}
-          </Button>
-          <Button asChild type="button" variant="outline">
-            <Link to="/dashboard">Cancel</Link>
-          </Button>
+          </button>
+          <Link
+            to="/dashboard"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 text-center"
+          >
+            Cancel
+          </Link>
         </div>
       </form>
     </div>
