@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 import * as React from "react"
-import { cn } from "@/lib/utils"
+// Update the import path below if your utils file is located elsewhere
+import { cn } from "../../lib/utils"
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 

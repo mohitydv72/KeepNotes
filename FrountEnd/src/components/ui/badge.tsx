@@ -1,6 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
 import type * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import { cn } from "../../lib/utils"
 import type { JSX } from "react/jsx-runtime" // Declare JSX variable
 
 const badgeVariants = cva(
