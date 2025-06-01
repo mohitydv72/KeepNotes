@@ -3,6 +3,7 @@ import { connectDB } from "./config/database";
 import userModel from "./models/userModel";
 import notesModel from "./models/notesModel";
 import noteRoutes from "./routes/noteRoutes";
+import authRoutes from "./routes/authRoutes";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -10,6 +11,8 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 
 app.use('/api/notes', noteRoutes);
+app.use('/api/auth', authRoutes);  
+
 
 //create user for testing
 // app.post('/api/users', async (req: Request, res: Response) => {
@@ -57,10 +60,10 @@ app.use('/api/notes', noteRoutes);
 //     res.send('Hello, World!');
 // });
 
-app.use((err: Error, req: Request, res: Response) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
-});
+// app.use((err: Error, req: Request, res: Response) => {
+//   console.error(err.stack);
+//   res.status(500).send('Something broke!');
+// });
 
 // Example route
 // app.get('/api/example', (req: Request, res: Response) => {

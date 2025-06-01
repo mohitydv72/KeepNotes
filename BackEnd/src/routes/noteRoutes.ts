@@ -7,12 +7,12 @@ import {
   updateNote,
   deleteNote
 } from '../controllers/notescontroller';
-// import authMiddleware from '../middleware/authMiddleware'; // For bonus feature
+import { authMiddleware } from '../middleware/authMiddleware'; 
 
 const noteRouter = express.Router();
 
 // For bonus feature: noteRouter.use(authMiddleware);
-noteRouter.get('/', getAllNotes);
+noteRouter.get('/', authMiddleware, getAllNotes);
 noteRouter.get('/:id', getNoteById);
 noteRouter.post('/', createNote);
 noteRouter.put('/:id', updateNote);
