@@ -1,77 +1,134 @@
-// server/controllers/auth.ts
-import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import User from '../models/userModel';
-// import { JWT_SECRET } from '../config/database';
+import type { Request, Response, NextFunction } from "express"
+import jwt from "jsonwebtoken"
+import User from "../models/User"
 
-// Extend Express Request interface to include userId
-declare global {
-  namespace Express {
-    interface Request {
-      userId?: string;
+// Generate JWT token
+const generateToken = (userId: string): string => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" })
+}
+
+// @desc    Register a new user
+// @route   POST /api/auth/register
+// @access  Public
+export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { name, email, password } = req.body
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email })
+    if (existingUser) {
+      res.status(409).json({
+        success: false,
+        message: "User already exists with this email",
+      })
+      return
     }
+    
+
+    // Create new user
+    const user = new User({ name, email, password }) as typeof User.prototype
+    await user.save()
+
+    // Generate token 
+    const token = generateToken(user._id.toString())
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    })
+  } catch (error) {
+    next(error)
   }
 }
 
-export const signup = async (req: Request, res: Response): Promise<void> => {
+// @desc    Login user
+// @route   POST /api/auth/login
+// @access  Public
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { username, email, password } = req.body;
-    
-    // Check if user exists
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-    if (existingUser) {
-      res.status(400).json({ message: 'Username or email already exists' });
-      return;
+    const { email, password } = req.body
+
+    // Find user by email
+    const user = await User.findOne({ email }) as (typeof User.prototype & { _id: any, isActive?: boolean, comparePassword?: (password: string) => Promise<boolean> })
+    if (!user || !user.isActive) {
+      res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      })
+      return
     }
 
-    const user = new User({ username, email, password });
-    await user.save();
-    
-    // Create token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || "fallback-secret", { expiresIn: '1d' });
+    // Check password
+    const isValidPassword = await user.comparePassword(password)
+    if (!isValidPassword) {
+      res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      })
+      return
+    }
 
-    res.status(201).json({ token , user: { id: user._id, username: user.username, email: user.email } });
+    // Generate token
+    const token = generateToken(user._id.toString())
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    })
   } catch (error) {
-    res.status(500).json({ message: 'Error creating user' });
+    next(error)
   }
-};
+}
 
-export const login = async (req: Request, res: Response): Promise<void> => {
+// @desc    Get current user profile
+// @route   GET /api/auth/profile
+// @access  Private
+export const getProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { username, password } = req.body;
-    
-    const user = await User.findOne({ username });
-    if (!user) {
-      res.status(401).json({ message: 'Invalid credentials' });
-      return;
-    }
-
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      res.status(401).json({ message: 'Invalid credentials' });
-      return;
-    }
-
-    // Create token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || "fallback-secret", { expiresIn: '1d' });
-
-    res.json({ token  , user: { id: user._id, username: user.username, email: user.email } });
+    res.json({
+      success: true,
+      user: req.user,
+    })
   } catch (error) {
-    res.status(500).json({ message: 'Error logging in' });
+    next(error)
   }
-};
+}
 
-// create a router get user  by email
-export const getUserByEmail = async (req: Request, res: Response): Promise<void> => {
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+export const updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { email } = req.params;
-    const user = await User.findOne({ email }).select('-password');
-    if (!user) {
-      res.status(404).json({ message: 'User not found' });
-      return;
+    const { name } = req.body
+
+    if (!req.userId) {
+      res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      })
+      return
     }
-    res.json({ id: user._id, username: user.username, email: user.email });
+
+    const user = await User.findByIdAndUpdate(req.userId, { name }, { new: true, runValidators: true })
+
+    res.json({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    })
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching user' });
+    next(error)
   }
-};
+}
