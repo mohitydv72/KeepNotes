@@ -12,23 +12,27 @@ export const getAllNotes = async (req: Request, res: Response) => {
   }
 };
 
-export const getNoteById = async (req: Request, res: Response) => {
+export const getNoteById = async (req: Request, res: Response) : Promise<void> => {
   try {
     const note = await Note.findById(req.params.id);
-    if (!note) return res.status(404).json({ message: 'Note not found' });
+    if (!note) {
+      res.status(404).json({ message: 'Note not found' });
+      return;
+    }
     res.json(note);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching note' });
   }
 };
 
-export const createNote = async (req: Request, res: Response) => {
+export const createNote = async (req: Request, res: Response) : Promise<void>=> {
   try {
     const { title, type, items } = req.body;
     
     // Validate note type
     if (!['bullet', 'checklist'].includes(type)) {
-      return res.status(400).json({ message: 'Invalid note type' });
+       res.status(400).json({ message: 'Invalid note type' });
+       return;
     }
     
     const newNote = new Note({
@@ -47,18 +51,22 @@ export const createNote = async (req: Request, res: Response) => {
   }
 };
 
-export const updateNote = async (req: Request, res: Response) => {
+export const updateNote = async (req: Request, res: Response) : Promise<void> => {
   try {
     const { title, items } = req.body;
     const note = await Note.findById(req.params.id);
-    
-    if (!note) return res.status(404).json({ message: 'Note not found' });
-    
+
+    if (!note) {
+      res.status(404).json({ message: 'Note not found' });
+      return;
+    }
+
     // Prevent changing note type
     if (req.body.type && req.body.type !== note.type) {
-      return res.status(400).json({ message: 'Cannot change note type' });
+      res.status(400).json({ message: 'Cannot change note type' });
+      return;
     }
-    
+
     note.title = title || note.title;
     note.items = items || note.items;
     await note.save();
@@ -69,10 +77,13 @@ export const updateNote = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteNote = async (req: Request, res: Response) => {
+export const deleteNote = async (req: Request, res: Response) : Promise<void> => {
   try {
     const note = await Note.findByIdAndDelete(req.params.id);
-    if (!note) return res.status(404).json({ message: 'Note not found' });
+    if (!note) {
+      res.status(404).json({ message: 'Note not found' });
+      return;
+    }
     res.json({ message: 'Note deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting note' });

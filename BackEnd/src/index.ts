@@ -2,34 +2,34 @@ import express, { Request, Response } from "express";
 import { connectDB } from "./config/database";
 import userModel from "./models/userModel";
 import notesModel from "./models/notesModel";
-// import noteRoutes from "./routes/noteRoutes";
+import noteRoutes from "./routes/noteRoutes";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // app.use(cors());
 app.use(express.json());
 
-// app.use('/api/notes', noteRoutes);
+app.use('/api/notes', noteRoutes);
 
 //create user for testing
-app.post('/api/users', async (req: Request, res: Response) => {
-    try {
-        const { username, email, password } = req.body;
-        const user = new userModel({ username, email, password });
-        await user.save();
-        res.status(201).json({ message: 'User created successfully', user });
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating user', error });
-    }
-});
-app.get('/api/users', async (req: Request, res: Response) => {
-    try {
-        const users = await userModel.find();
-        res.status(200).json(users);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching users', error });
-    }
-});
+// app.post('/api/users', async (req: Request, res: Response) => {
+//     try {
+//         const { username, email, password } = req.body;
+//         const user = new userModel({ username, email, password });
+//         await user.save();
+//         res.status(201).json({ message: 'User created successfully', user });
+//     } catch (error) {
+//         res.status(500).json({ message: 'Error creating user', error });
+//     }
+// });
+// app.get('/api/users', async (req: Request, res: Response) => {
+//     try {
+//         const users = await userModel.find();
+//         res.status(200).json(users);
+//     } catch (error) {
+//         res.status(500).json({ message: 'Error fetching users', error });
+//     }
+// });
 
 // notes model testing
 
@@ -53,14 +53,19 @@ app.get('/api/users', async (req: Request, res: Response) => {
 //     }
 // });
 
-app.get('/', (req: Request, res: Response) => {
-    res.send('Hello, World!');
+// app.get('/', (req: Request, res: Response) => {
+//     res.send('Hello, World!');
+// });
+
+app.use((err: Error, req: Request, res: Response) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
 });
 
 // Example route
-app.get('/api/example', (req: Request, res: Response) => {
-    res.json({ message: 'This is an example route' });
-});
+// app.get('/api/example', (req: Request, res: Response) => {
+//     res.json({ message: 'This is an example route' });
+// });
 
 app.listen(PORT, () => {
     connectDB().then(() => {
