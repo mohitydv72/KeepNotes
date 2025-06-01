@@ -1,0 +1,214 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// "use client"
+
+import { useState, useEffect } from "react"
+import { useParams, useNavigate, Link } from "react-router-dom"
+import { notesAPI } from "../services/api"
+import { Button } from "../components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
+import { Badge } from "../components/ui/badge"
+import { Checkbox } from "../components/ui/checkbox"
+import { ArrowLeft, Edit, Trash2, FileText, CheckSquare, Calendar } from "lucide-react"
+import toast from "react-hot-toast"
+
+interface Note {
+  _id: string
+  title: string
+  type: "bullet" | "checklist"
+  items: Array<{
+    text: string
+    completed?: boolean
+  }>
+  createdAt: string
+  updatedAt: string
+}
+
+export default function ViewNotePage() {
+  const [note, setNote] = useState<Note | null>(null)
+  const [loading, setLoading] = useState(true)
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (id) {
+      fetchNote(id)
+    }
+  }, [id])
+
+  const fetchNote = async (noteId: string) => {
+    try {
+      const response = await notesAPI.getNoteById(noteId)
+      setNote(response.data)
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        toast.error("Note not found")
+        navigate("/dashboard")
+      } else {
+        toast.error("Failed to fetch note")
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const deleteNote = async () => {
+    if (!note || !confirm("Are you sure you want to delete this note?")) return
+
+    try {
+      await notesAPI.deleteNote(note._id)
+      toast.success("Note deleted successfully")
+      navigate("/dashboard")
+    } catch (error: any) {
+      toast.error("Failed to delete note")
+    }
+  }
+
+  const toggleItemCompleted = async (itemIndex: number) => {
+    if (!note || note.type !== "checklist") return
+
+    const updatedItems = [...note.items]
+    updatedItems[itemIndex].completed = !updatedItems[itemIndex].completed
+
+    try {
+      await notesAPI.updateNote(note._id, {
+        ...note,
+        items: updatedItems,
+      })
+      setNote({ ...note, items: updatedItems })
+    } catch (error: any) {
+      toast.error("Failed to update item")
+    }
+  }
+
+  const getCompletedCount = () => {
+    if (!note || note.type !== "checklist") return null
+    const completed = note.items.filter((item) => item.completed).length
+    return `${completed}/${note.items.length} completed`
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="h-12 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-6 bg-gray-200 rounded w-1/2 mb-8"></div>
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-4 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!note) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="text-center py-16">
+          <h2 className="text-2xl font-bold text-gray-900  mb-4">Note not found</h2>
+          <Button asChild>
+            <Link to="/dashboard">Back to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="mb-6">
+        <Button asChild variant="ghost" className="mb-4">
+          <Link to="/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900  mb-2">{note.title}</h1>
+            <div className="flex items-center gap-4 text-sm text-gray-600 ">
+              <div className="flex items-center">
+                <Calendar className="mr-1 h-4 w-4" />
+                Created: {new Date(note.createdAt).toLocaleDateString()}
+              </div>
+              {note.updatedAt !== note.createdAt && (
+                <div className="flex items-center">
+                  <Calendar className="mr-1 h-4 w-4" />
+                  Updated: {new Date(note.updatedAt).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Badge variant={note.type === "bullet" ? "default" : "secondary"} className="text-sm">
+              {note.type === "bullet" ? (
+                <FileText className="w-4 h-4 mr-1" />
+              ) : (
+                <CheckSquare className="w-4 h-4 mr-1" />
+              )}
+              {note.type}
+            </Badge>
+            {note.type === "checklist" && <Badge variant="outline">{getCompletedCount()}</Badge>}
+          </div>
+        </div>
+      </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            {note.type === "bullet" ? <FileText className="mr-2 h-5 w-5" /> : <CheckSquare className="mr-2 h-5 w-5" />}
+            {note.type === "bullet" ? "Bullet Points" : "Checklist Items"}
+          </CardTitle>
+          <CardDescription>
+            {note.items.length} {note.items.length === 1 ? "item" : "items"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {note.items.map((item, index) => (
+              <div key={index} className="flex items-start gap-3 p-3 rounded-lg border bg-gray-50 ">
+                {note.type === "bullet" ? (
+                  <span className="w-2 h-2 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
+                ) : (
+                  <Checkbox
+                    checked={item.completed || false}
+                    onCheckedChange={() => toggleItemCompleted(index)}
+                    className="mt-1"
+                  />
+                )}
+                <div className="flex-1">
+                  <p
+                    className={`text-gray-900  whitespace-pre-wrap ${
+                      note.type === "checklist" && item.completed ? "line-through text-gray-500 " : ""
+                    }`}
+                  >
+                    {item.text}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex gap-4">
+        <Button asChild className="flex-1">
+          <Link to={`/notes/${note._id}/edit`}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Note
+          </Link>
+        </Button>
+        <Button variant="destructive" onClick={deleteNote} className="flex-1">
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete Note
+        </Button>
+      </div>
+    </div>
+  )
+}
