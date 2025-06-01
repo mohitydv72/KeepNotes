@@ -4,8 +4,9 @@ import Note, { INote, NoteType } from '../models/notesModel';
 
 export const getAllNotes = async (req: Request, res: Response) => {
   try {
-    // For bonus feature: const notes = await Note.find({ userId: req.userId });
-    const notes = await Note.find();
+    // For bonus feature: 
+    const notes = await Note.find({ userId: req.userId });
+    // const notes = await Note.find();
     res.json(notes);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching notes' });
@@ -41,7 +42,7 @@ export const createNote = async (req: Request, res: Response) : Promise<void>=> 
       items: type === 'bullet' 
         ? items.map((content: string) => ({ content }))
         : items.map(({ content, checked }: { content: string, checked: boolean }) => ({ content, checked })),
-      // For bonus feature: userId: req.userId
+    //   userId: req.userId 
     });
     
     await newNote.save();
