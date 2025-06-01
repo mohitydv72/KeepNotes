@@ -1,21 +1,41 @@
-// server/routes/notes.ts
-import express, { Request, Response } from "express";
+import express from "express"
 import {
-  getAllNotes,
+  getNotes,
   getNoteById,
   createNote,
   updateNote,
-  deleteNote
-} from '../controllers/notescontroller';
-import { authMiddleware } from '../middleware/authMiddleware'; 
+  deleteNote,
+  toggleArchiveNote,
+  getNotesStats,
+} from "../controllers/noteController"
+import { authenticateToken } from "../middleware/auth"
+import { validateCreateNote, validateUpdateNote, validateNoteId } from "../middleware/validation"
 
-const noteRouter = express.Router();
+const router = express.Router()
 
-// For bonus feature: noteRouter.use(authMiddleware);
-noteRouter.get('/', authMiddleware, getAllNotes);
-noteRouter.get('/:id', getNoteById);
-noteRouter.post('/', createNote);
-noteRouter.put('/:id', updateNote);
-noteRouter.delete('/:id', deleteNote);
+// All routes are protected
+router.use(authenticateToken)
 
-export default noteRouter;
+// Notes CRUD routes
+router.get("/", getNotes)
+router.get("/stats", getNotesStats)
+router.get("/:id", 
+  validateNoteId, 
+  getNoteById)
+router.post("/", 
+  validateCreateNote, 
+  createNote)
+router.put("/:id", 
+  validateUpdateNote, 
+  updateNote)
+router.delete("/:id", 
+  validateNoteId, 
+  deleteNote)
+router.patch("/:id/archive", 
+  validateNoteId, 
+  toggleArchiveNote)
+
+  // all routes link for testing 
+  // localhost:5000/api/notes
+
+export default router

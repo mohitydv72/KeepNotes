@@ -1,13 +1,20 @@
-// server/routes/auth.ts
-import express from 'express';
-import { signup, login , getUserByEmail } from '../controllers/authController';
-import { authMiddleware } from '../middleware/authMiddleware'; // Optional, if you want to protect routes
+import express from "express"
+import { register, login, getProfile, updateProfile } from "../controllers/authController"
+import { authenticateToken } from "../middleware/auth"
+// import { validateRegister, validateLogin } from "../middleware/validation"
 
-const router = express.Router();
+const router = express.Router()
 
-router.post('/signup', signup);
-router.post('/login', login);
-router.get('/users/:email', authMiddleware, getUserByEmail);
+// Public routes
+router.post("/register", 
+    // validateRegister,
+     register)
+router.post("/login", 
+    // validateLogin,
+    login)
 
+// Protected routes
+router.get("/profile", authenticateToken, getProfile)
+router.put("/profile", authenticateToken, updateProfile)
 
-export default router;
+export default router
